@@ -14,6 +14,45 @@ app.get("/health", (req, res) => {
 })
 
 app.post("/session-token", async (req, res) => {
+
+    const resumeText = `
+    Name: Surya
+    Role: Backend Developer
+    Skills: Node.js, Express, MongoDB, SQL, REST APIs
+    Experience: Built scalable backend systems and authentication services.
+    Projects: Resume ATS analyzer, AI Interview system.
+    `;
+
+    const dynamicContextPrompt = `
+    You are a professional technical interviewer.
+
+    Candidate Resume:
+    ${resumeText}
+
+    Instructions:
+    - Ask one technical question at a time.
+    - Keep questions concise.
+    - Focus on backend and system design.
+    - Wait for the user to respond before next question.
+    `;
+
+    const contextResponse = await fetch(`${API_URL}/v1/contexts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": process.env.LIVEAVATAR_API_KEY,
+        },
+        body: JSON.stringify({
+          name: `resume_${Date.now()}`,
+          opening_text: "Hello, let's begin your interview.",
+          prompt: dynamicContextPrompt,
+        }),
+      }
+    );
+
+    const contextData = await contextResponse.json();
+    const contextId = contextData.data.id;
+
     const response = await fetch(`${API_URL}/v1/sessions/token`, {
         method: "POST",
         headers: {
@@ -25,10 +64,10 @@ app.post("/session-token", async (req, res) => {
             avatar_id: process.env.AVATAR_ID,
             avatar_persona: {
                 voice_id: process.env.VOICE_ID,
-                context_id: process.env.CONTEXT_ID,
+                context_id: contextId,
                 language: process.env.LANGUAGE,
             },
-            is_sandbox: process.env.IS_SANDBOX
+            is_sandbox: process.env.IS_SANDBOX,
         })
     });
 
