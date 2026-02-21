@@ -1,107 +1,50 @@
 "use client";
+import './App.css'
 
-import { useState, useEffect, useRef } from "react";
-import {
-  LiveAvatarContextProvider,
-  useSession,
-  useTextChat
-} from "./liveavatar";
-import { SessionState } from "@heygen/liveavatar-web-sdk";
-
-function AvatarUI({ onSessionStopped }) {
-  const videoRef = useRef(null);
-  const [message, setMessage] = useState("");
-
-  const {
-    sessionState,
-    isStreamReady,
-    startSession,
-    stopSession,
-    attachElement
-  } = useSession();
-
-  const { sendMessage } = useTextChat("FULL");
-
-  useEffect(() => {
-    if (sessionState === SessionState.INACTIVE) {
-      startSession();
-    }
-  }, [sessionState, startSession]);
-
-  useEffect(() => {
-    if (isStreamReady && videoRef.current) {
-      attachElement(videoRef.current);
-    }
-  }, [isStreamReady, attachElement]);
-
-  useEffect(() => {
-    if (sessionState === SessionState.DISCONNECTED) {
-      onSessionStopped();
-    }
-  }, [sessionState, onSessionStopped]);
-
-  return (
-    <div>
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        width={1080}
-        style={{ background: "black" }}
-      />
-
-      <div>
-        <input
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-        <button
-          onClick={() => {
-            if (!message) return;
-            sendMessage(message);
-            setMessage("");
-          }}
-        >
-          Send
-        </button>
-
-        <button onClick={stopSession}>
-          Stop
-        </button>
-      </div>
-    </div>
-  );
-}
+import { useState } from "react";
+import ResumeUploadPage from "./components/ResumeUploadPage";
+import ProcessingPage from "./components/ProcessingPage";
+import InterviewPage from "./components/InterviewPage";
 
 export default function App() {
+  const [stage, setStage] = useState("upload");
+  const [resumeData, setResumeData] = useState(null);
   const [sessionToken, setSessionToken] = useState("");
-
-  const start = async () => {
-    const res = await fetch("http://localhost:3000/session-token", {
-      method: "POST"
-    });
-
-    const { session_token } = await res.json();
-
-    console.log("Received Token:", session_token);
-
-    setSessionToken(session_token);
-  };
-
-  const resetSession = () => {
-    setSessionToken("");
-  };
-
-  if (!sessionToken) {
-    return <button onClick={start}>Start</button>;
+  if (stage === "upload") {
+    return (
+      <ResumeUploadPage
+        onUploadSuccess={(data) => {
+          setResumeData(data);
+          setStage("processing");
+        }}
+      />
+    );
   }
 
-  return (
-    <LiveAvatarContextProvider
-      sessionAccessToken={sessionToken}
-      voiceChatConfig={false}
-    >
-      <AvatarUI onSessionStopped={resetSession} />
-    </LiveAvatarContextProvider>
-  );
+  if (stage === "processing") {
+    return (
+      <ProcessingPage
+        resumeData={resumeData}
+        onSessionReady={(token) => {
+          setSessionToken(token);
+          setStage("interview");
+        }}
+      />
+    );
+  }
+
+  if (stage === "interview") {
+    return (
+      <InterviewPage
+        sessionToken={sessionToken}
+        onExit={() => {
+          setSessionToken("");
+          setResumeData(null);
+          setStage("upload");
+        }}
+      />
+    );
+  }
+
+  return null;
 }

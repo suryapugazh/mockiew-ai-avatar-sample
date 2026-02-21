@@ -15,13 +15,7 @@ app.get("/health", (req, res) => {
 
 app.post("/session-token", async (req, res) => {
 
-    const resumeText = `
-    Name: Surya
-    Role: Backend Developer
-    Skills: Node.js, Express, MongoDB, SQL, REST APIs
-    Experience: Built scalable backend systems and authentication services.
-    Projects: Resume ATS analyzer, AI Interview system.
-    `;
+    const resumeText = req.body.data;
 
     const dynamicContextPrompt = `
     You are a professional technical interviewer.
@@ -30,6 +24,7 @@ app.post("/session-token", async (req, res) => {
     ${resumeText}
 
     Instructions:
+    - Must start with their name
     - Ask one technical question at a time.
     - Keep questions concise.
     - Focus on backend and system design.
@@ -44,7 +39,7 @@ app.post("/session-token", async (req, res) => {
         },
         body: JSON.stringify({
           name: `resume_${Date.now()}`,
-          opening_text: "Hello, let's begin your interview.",
+          opening_text: `Hello, let's begin your interview.`,
           prompt: dynamicContextPrompt,
         }),
       }
