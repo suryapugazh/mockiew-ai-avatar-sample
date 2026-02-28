@@ -1,8 +1,15 @@
-import { useEffect } from "react";
-import { FASTAPI_URL, EXPRESS_URL } from "../config/apiUrls";
+import { useEffect, useRef } from "react";
+import { FASTAPI_URL } from "../config/apiUrls";
 
 export default function ProcessingPage({ resumeData, onSessionReady }) {
+
+  const hasProcessed = useRef(false);
+
   useEffect(() => {
+
+    if (hasProcessed.current) return;
+    hasProcessed.current = true;
+    
     async function processResume() {
 
     const formData = new FormData();
@@ -15,16 +22,23 @@ export default function ProcessingPage({ resumeData, onSessionReady }) {
     
     const data = await parseRes.json();
 
-    const res = await fetch(`${EXPRESS_URL}/session-token`, {
+    const res = await fetch(`${FASTAPI_URL}/create-session`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ data })
+      body: JSON.stringify({
+        name: data.name,
+        questions: data.questions
+      })
     });
 
     const { session_token } = await res.json();
-      onSessionReady(session_token);
+
+    onSessionReady({
+      sessionToken: session_token,
+      interviewData: data
+    });
     }
 
     processResume();

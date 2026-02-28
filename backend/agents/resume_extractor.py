@@ -2,21 +2,29 @@ import os
 import json
 import requests
 from dotenv import load_dotenv
-from prompts import EXTRACT_CANDIDATE_DETAILS
+from prompts import PROCESS_RESUME_AND_GENERATE_QUESTIONS
 
 load_dotenv()
 OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT")
 
 def extract_resume_data(resume_data):
 
-    prompt = EXTRACT_CANDIDATE_DETAILS.format(resume_text = resume_data)
+    prompt = PROCESS_RESUME_AND_GENERATE_QUESTIONS.format(resume_text = resume_data)
 
     payload_data = {
         "model": "qwen2.5:7b-instruct",
         "prompt": prompt,
         "stream": False,
-        "format": "json"
+        "format": "json",
+        "options": {
+            "keep_alive": "60m"
+        }
     }
+        # "options": {
+        #     "keep_alive": "30m", - to persist model in CPU memory for 30min
+        #     "num_ctx": 4096  - to set context length, increasing cause slow response, decreasing cause speed response
+        #                      - The best low num_ctx setting is 2048 or 1024 for intel i5 1240p 8gb ram
+        # },
 
     # payload = json.dumps(payload_data)
 

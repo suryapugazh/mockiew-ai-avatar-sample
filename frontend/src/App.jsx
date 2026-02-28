@@ -2,14 +2,16 @@
 import './App.css'
 
 import { useState } from "react";
-import ResumeUploadPage from "./components/ResumeUploadPage";
-import ProcessingPage from "./components/ProcessingPage";
-import InterviewPage from "./components/InterviewPage";
+import ResumeUploadPage from "./pages/ResumeUploadPage";
+import ProcessingPage from "./pages/ProcessingPage";
+import InterviewPage from "./pages/InterviewPage";
 
 export default function App() {
   const [stage, setStage] = useState("upload");
   const [resumeData, setResumeData] = useState(null);
   const [sessionToken, setSessionToken] = useState("");
+  const [interviewData, setInterviewData] = useState(null);
+
   if (stage === "upload") {
     return (
       <ResumeUploadPage
@@ -25,8 +27,9 @@ export default function App() {
     return (
       <ProcessingPage
         resumeData={resumeData}
-        onSessionReady={(token) => {
-          setSessionToken(token);
+        onSessionReady={({sessionToken, interviewData}) => {
+          setSessionToken(sessionToken);
+          setInterviewData(interviewData);
           setStage("interview");
         }}
       />
@@ -37,10 +40,12 @@ export default function App() {
     return (
       <InterviewPage
         sessionToken={sessionToken}
+        interviewData={interviewData}
         onExit={() => {
           setSessionToken("");
           setResumeData(null);
           setStage("upload");
+          setInterviewData(null);
         }}
       />
     );
