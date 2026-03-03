@@ -22,6 +22,13 @@ Extract the following fields strictly from the resume text:
   → Only return a number if total years of experience is explicitly written.
   → If not clearly mentioned, return null.
 - skills (list of strings or empty list)
+- projects (list of strings or empty list)
+  → For each project, extract:
+  → Project name
+  → Technologies used (as array)
+  → Short summary (2-3 lines maximum)
+  → Limit project summary to maximum 300 characters.
+  → Return projects as structured objects.
 - certifications (list of strings or empty list)
 - internships (string or null)
   → Return null if not explicitly mentioned.
@@ -65,6 +72,13 @@ Expected JSON format:
   "education": "Bachelor of Arts in History",
   "work_experience": null,
   "skills": ["Research", "Public Speaking"],
+  "projects": [
+    {{
+      "name": "",
+      "technologies": [],
+      "summary": ""
+    }}
+  ],
   "certifications": [],
   "internships": null,
   "questions": [
@@ -76,4 +90,110 @@ Expected JSON format:
 
 Resume text:
 {resume_text}
+"""
+
+
+
+
+
+EVALUATE_INTERVIEW = """
+You are an expert technical interviewer.
+
+Your task is to evaluate a candidate using:
+
+1. Interview Transcript
+2. Eye Contact Metrics
+3. Communication Metrics
+
+-----------------------
+RESUME DATA:
+{resume}
+
+Use resume skills and projects to check whether the candidate's answers
+align with claimed technologies.
+Evaluate consistency between transcript answers and resume claims.
+
+-----------------------
+TRANSCRIPT:
+{transcript}
+
+-----------------------
+GAZE METRICS:
+{gaze}
+
+-----------------------
+COMMUNICATION METRICS:
+{communication}
+
+-----------------------
+INTERACTION SUMMARY:
+{interaction_summary}
+
+-----------------------
+
+INTERPRETATION RULES:
+
+- If voice_ratio >= 0.6 → treat interview as primarily voice.
+- If voice_ratio < 0.6 → treat interview as primarily text.
+- For text-dominant interviews, DO NOT penalize silence duration or long silence count.
+- Silence penalties apply ONLY for voice-dominant interviews.
+
+SCORING RULES:
+
+Technical Score (0-10):
+- Accuracy of answers
+- Depth of explanation
+- Relevance to question
+
+Communication Score (0-10):
+IMPORTANT RULES:
+
+- If eye_contact_score >= 8 → treat eye contact as strong.
+- If eye_contact_score between 5 and 8 → moderate.
+- If eye_contact_score < 5 → weak.
+- Silence duration (only if voice_ratio >= 0.6)
+
+EYE CONTACT WEIGHTING:
+
+- If eye_contact_score >= 8 → +2 to communication_score baseline
+- If 5 <= eye_contact_score < 8 → +1
+- If eye_contact_score < 5 → -2
+
+- Use numeric metrics strictly.
+- Do NOT infer eye contact from transcript tone.
+- Only use provided gaze metrics for eye contact evaluation.
+
+TEXT MODE RULE:
+
+If voice_ratio < 0.6:
+- Do not use silence metrics.
+- avg_delay_ms should not reduce score.
+
+TECHNICAL SCORING GUIDELINES:
+
+- If answers are incomplete or unclear → max 4
+- If answers contain spelling noise or meaningless phrases → max 3
+- If answer does not address the question → reduce score significantly
+
+Behavioral Score (0-10):
+- Confidence
+- Clarity
+- Professional tone
+
+Return STRICT JSON only in this format:
+
+{{
+  "technical_score": float,
+  "communication_score": float,
+  "behavioral_score": float,
+  "overall_score": float,
+  "strengths": ["string"],
+  "weaknesses": ["string"],
+  "improvement_suggestions": ["string"],
+  "detailed_feedback": "string"
+}}
+
+DO NOT add any explanation.
+DO NOT add markdown.
+ONLY return valid JSON.
 """

@@ -1,16 +1,17 @@
 import { useEffect, useRef } from "react";
 import { FASTAPI_URL } from "../config/apiUrls";
 
-export default function ProcessingPage({ resumeData, onSessionReady }) {
+export default function ProcessingPage({ mode, resumeData, onSessionReady, onEvaluationReady, evaluationPayload }) {
 
-  const hasProcessed = useRef(false);
+  const lastProcessedMode = useRef(null);
 
   useEffect(() => {
 
-    if (hasProcessed.current) return;
-    hasProcessed.current = true;
+    if (lastProcessedMode.current === mode) return;
+    lastProcessedMode.current = mode;
     
     async function processResume() {
+      if (mode === "pre") {
 
     const formData = new FormData();
     formData.append("resume", resumeData);
@@ -39,18 +40,41 @@ export default function ProcessingPage({ resumeData, onSessionReady }) {
       sessionToken: session_token,
       interviewData: data
     });
-    }
+    
+  }
+
+  if (mode === "post") {
+
+  const res = await fetch(`${FASTAPI_URL}/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(evaluationPayload)
+  });
+
+  const result = await res.json();
+  onEvaluationReady(result);
+}
+  }
 
     processResume();
-  }, [resumeData, onSessionReady]);
+  }, [mode, resumeData, onSessionReady, onEvaluationReady, evaluationPayload]);
 
   return (
     <div className="fullscreen-center">
 
-      <h2>Analyzing Resume...</h2>
-      <p>Preparing your AI interviewer</p>
-      <div className="loader"></div>
+      {mode === "pre" ? (
+        <>
+          <h2>Analyzing Resume...</h2>
+          <p>Preparing your AI interviewer</p>
+        </>
+      ) : (
+        <>
+          <h2>Evaluating Your Performance...</h2>
+          <p>Analyzing technical, communication & behavioral skills</p>
+        </>
+      )}
 
+      <div className="loader"></div>
     </div>
   );
 }

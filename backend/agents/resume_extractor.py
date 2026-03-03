@@ -36,12 +36,11 @@ def extract_resume_data(resume_data):
         response = requests.post(OLLAMA_ENDPOINT, json=payload_data)
         data = response.json()
 
-    print(response)
+    # print(response)
 
     response = response.json()['response']
 
     return response
-
 
 """
 {
